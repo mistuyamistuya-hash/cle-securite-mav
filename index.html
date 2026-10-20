@@ -43,8 +43,11 @@
       background: #101b16;
       color: #f0f6f2;
     }
-    .brand { display: flex; gap: 11px; align-items: center; font-weight: 700; letter-spacing: .02em; }
-    .brand-mark { display: grid; place-items: center; width: 29px; height: 29px; border: 1px solid #75d6aa; border-radius: 8px; color: #75d6aa; font-family: Consolas, monospace; font-size: 17px; }
+    .brand { display: flex; gap: 12px; align-items: center; }
+    .brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid #75d6aa; border-radius: 11px 11px 5px 11px; background: linear-gradient(145deg, #294c3a, #14251d); box-shadow: inset 0 0 0 3px #62c99a18, 0 0 18px #62c99a20; color: #a5edc2; font: 700 19px Georgia, serif; }
+    .brand-copy { display: grid; gap: 4px; }
+    .brand-title { color: #f0f6f2; font-size: 14px; line-height: 1; letter-spacing: .09em; }
+    .brand-subtitle { color: #9ab4a5; font: 9px Consolas, monospace; letter-spacing: .08em; }
     .top-note { color: #afc5b8; font: 11px Consolas, monospace; }
     main { width: min(860px, calc(100% - 36px)); margin: 0 auto; padding: 62px 0 46px; animation: arrive .45s ease-out both; }
     @keyframes arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -151,7 +154,10 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="brand-mark" aria-hidden="true">K</span><span>Clé · sécurité en douceur</span></div>
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">C</span>
+      <span class="brand-copy"><strong class="brand-title">CLÉ</strong><span class="brand-subtitle">SÉCURITÉ EN DOUCEUR</span></span>
+    </div>
     <span class="top-note">TON ESPACE PRIVÉ</span>
   </header>
   <main>

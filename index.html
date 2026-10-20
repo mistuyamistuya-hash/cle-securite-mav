@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Clé — Vérificateur de mot de passe</title>
+  <style>
+    :root {
+      font-family: "Aptos", "Segoe UI", sans-serif;
+      color: #e4eee8;
+      background: #101915;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      --ink: #e4eee8;
+      --muted: #a4b6ac;
+      --line: #34483e;
+      --paper: #19251f;
+      --green: #62c99a;
+      --green-soft: #203f31;
+      --amber: #f0bd69;
+      --red: #f18c83;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background-color: #0d1511;
+      background-image:
+        linear-gradient(#62c99a0a 1px, transparent 1px),
+        linear-gradient(90deg, #62c99a0a 1px, transparent 1px),
+        radial-gradient(ellipse at 50% 0%, #20372c 0%, #121d17 46%, #0d1511 100%);
+      background-size: 56px 56px, 56px 56px, cover;
+      background-attachment: fixed;
+    }
+    button, input { font: inherit; }
+    .topbar {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(20px, 6vw, 88px);
+      background: #101b16;
+      color: #f0f6f2;
+    }
+    .brand { display: flex; gap: 11px; align-items: center; font-weight: 700; letter-spacing: .02em; }
+    .brand-mark { display: grid; place-items: center; width: 29px; height: 29px; border: 1px solid #75d6aa; border-radius: 8px; color: #75d6aa; font-family: Consolas, monospace; font-size: 17px; }
+    .top-note { color: #afc5b8; font: 11px Consolas, monospace; }
+    main { width: min(860px, calc(100% - 36px)); margin: 0 auto; padding: 62px 0 46px; animation: arrive .45s ease-out both; }
+    @keyframes arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .eyebrow { display: flex; align-items: center; gap: 9px; color: var(--green); font: 11px Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
+    .eyebrow::before { content: ""; width: 20px; height: 1px; background: #62c99a; }
+    h1 { max-width: 720px; margin: 15px 0 10px; font-size: clamp(30px, 5vw, 43px); line-height: 1.1; letter-spacing: 0; }
+    .intro { max-width: 570px; margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
+    .tabs { display: flex; gap: 6px; margin-top: 28px; overflow-x: auto; border-bottom: 1px solid var(--line); }
+    .tab { flex: 0 0 auto; min-height: 42px; padding: 0 15px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); cursor: pointer; font-size: 13px; font-weight: 700; }
+    .tab:hover { color: var(--ink); }
+    .tab[aria-selected="true"] { border-bottom-color: var(--green); color: var(--green); }
+    .workspace { margin-top: 31px; padding: clamp(20px, 4vw, 34px); background: var(--paper); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 14px 40px #00000030; }
+    .tab-panel[hidden] { display: none; }
+    .tab-panel h2 { margin: 0; font-size: 20px; }
+    .tool-intro { margin: 8px 0 21px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .field-label { display: block; margin-bottom: 9px; color: #d4e2d9; font-size: 13px; font-weight: 700; }
+    .input-row { display: flex; min-height: 54px; border: 1px solid #50665a; border-radius: 6px; overflow: hidden; background: #111a15; }
+    .input-row:focus-within { border-color: var(--green); box-shadow: 0 0 0 3px #62c99a26; }
+    #password { flex: 1; min-width: 0; padding: 0 15px; border: 0; outline: 0; color: var(--ink); font: 15px Consolas, monospace; background: transparent; }
+    #password::placeholder { color: #84968b; font: 14px "Aptos", "Segoe UI", sans-serif; }
+    .icon-button { min-width: 54px; border: 0; border-left: 1px solid var(--line); background: #202d26; color: #c1d9ca; cursor: pointer; font-size: 12px; font-weight: 700; }
+    .icon-button:hover { background: #2a3b31; }
+    .actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 13px; }
+    .action { min-height: 39px; padding: 0 13px; border: 1px solid #50665a; border-radius: 5px; background: #202d26; color: #d7e5dc; cursor: pointer; font-size: 12px; font-weight: 700; }
+    .action:hover { border-color: #75bd98; background: #293a30; }
+    .action.primary { border-color: var(--green); background: var(--green); color: #102219; }
+    .action.primary:hover { background: #7cdbac; }
+    .options { margin-top: 23px; padding: 17px 0 2px; border-top: 1px solid #34483e; }
+    .options-heading { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 12px; font-size: 12px; font-weight: 700; }
+    #length-value { color: var(--green); font: 12px Consolas, monospace; }
+    #length { width: 100%; accent-color: var(--green); }
+    .range-labels { display: flex; justify-content: space-between; color: var(--muted); font: 10px Consolas, monospace; }
+    .option-list { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-top: 17px; }
+    .option { display: inline-flex; align-items: center; gap: 7px; color: #c2d2c8; font-size: 12px; cursor: pointer; }
+    .option input { width: 15px; height: 15px; margin: 0; accent-color: var(--green); }
+    #generate:disabled { border-color: #46584d; background: #2b3830; color: #a5b2a9; cursor: not-allowed; }
+    .result { display: grid; grid-template-columns: 1fr auto; gap: 12px 20px; align-items: center; margin-top: 29px; }
+    .result-label { color: var(--muted); font-size: 12px; }
+    #strength { color: #62736c; font-size: 16px; font-weight: 700; }
+    .meter { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .segment { height: 6px; border-radius: 10px; background: #34443a; transition: background-color .2s ease; }
+    .segment.on { background: var(--green); }
+    .segment.on.mid { background: #d99a43; }
+    .segment.on.weak { background: var(--red); }
+    .criteria { margin-top: 25px; border-top: 1px solid #34483e; padding-top: 19px; }
+    .criteria-title { margin: 0 0 14px; font-size: 12px; font-weight: 700; }
+    .checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px 24px; }
+    .check { display: flex; align-items: center; gap: 9px; color: #a0b0a6; font-size: 12px; transition: color .15s ease; }
+    .check-bullet { display: grid; place-items: center; width: 18px; height: 18px; flex: 0 0 18px; border: 1px solid #52645a; border-radius: 50%; color: transparent; font-size: 11px; }
+    .check.pass { color: #91dcb4; }
+    .check.pass .check-bullet { border-color: #5d9f7a; background: var(--green-soft); color: #a0e6bc; }
+    .privacy { display: flex; gap: 11px; align-items: flex-start; margin-top: 23px; padding: 13px 14px; border-radius: 5px; background: #202d26; color: #bdcec3; font-size: 11px; line-height: 1.55; }
+    .privacy strong { color: #a6dfbd; white-space: nowrap; }
+    .phrase-controls { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, .8fr); gap: 18px; align-items: end; }
+    .phrase-controls label { display: block; margin-bottom: 9px; color: #d4e2d9; font-size: 12px; font-weight: 700; }
+    .phrase-controls input[type="range"] { width: 100%; accent-color: var(--green); }
+    .phrase-controls select { width: 100%; min-height: 42px; padding: 0 10px; border: 1px solid #50665a; border-radius: 5px; background: #111a15; color: var(--ink); }
+    .phrase-output { flex: 1; min-width: 0; padding: 0 13px; border: 0; outline: 0; background: transparent; color: var(--ink); font: 14px Consolas, monospace; }
+    .phrase-status { min-height: 18px; margin: 11px 0 0; color: var(--green); font-size: 12px; }
+    .username-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 17px; }
+    .username-controls label { display: block; margin-bottom: 8px; color: #d4e2d9; font-size: 12px; font-weight: 700; }
+    .username-controls input[type="text"], .username-controls select { width: 100%; min-height: 42px; padding: 0 11px; border: 1px solid #50665a; border-radius: 5px; background: #111a15; color: var(--ink); }
+    .username-controls input::placeholder { color: #84968b; }
+    .username-toggle { display: flex; align-items: center; gap: 8px; margin-top: 14px; color: #c2d2c8; font-size: 12px; cursor: pointer; }
+    .username-toggle input { width: 15px; height: 15px; margin: 0; accent-color: var(--green); }
+    .username-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 17px; }
+    .username-choice { min-width: 0; min-height: 44px; padding: 8px 11px; overflow-wrap: anywhere; border: 1px solid #40564a; border-radius: 5px; background: #202d26; color: #d7e5dc; cursor: pointer; font: 13px Consolas, monospace; text-align: left; }
+    .username-choice:hover, .username-choice[aria-pressed="true"] { border-color: var(--green); background: #263a2e; color: #9be3b9; }
+    .username-results:empty { display: none; }
+    .username-status { min-height: 18px; margin: 11px 0 0; color: var(--green); font-size: 12px; }
+    .email-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 17px; }
+    .email-controls label { display: block; margin-bottom: 8px; color: #d4e2d9; font-size: 12px; font-weight: 700; }
+    .email-controls input, .email-controls select { width: 100%; min-height: 42px; padding: 0 11px; border: 1px solid #50665a; border-radius: 5px; background: #111a15; color: var(--ink); }
+    .email-controls input::placeholder { color: #84968b; }
+    .email-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 17px; }
+    .email-choice { min-width: 0; min-height: 44px; padding: 8px 11px; overflow-wrap: anywhere; border: 1px solid #40564a; border-radius: 5px; background: #202d26; color: #d7e5dc; cursor: pointer; font: 13px Consolas, monospace; text-align: left; }
+    .email-choice:hover, .email-choice[aria-pressed="true"] { border-color: var(--green); background: #263a2e; color: #9be3b9; }
+    .email-results:empty { display: none; }
+    .email-status { min-height: 18px; margin: 11px 0 0; color: var(--green); font-size: 12px; }
+    .idea-form { display: grid; gap: 12px; }
+    .idea-form label { color: #d4e2d9; font-size: 12px; font-weight: 700; }
+    .idea-form select, .idea-form textarea { width: 100%; margin-top: 7px; padding: 11px 12px; border: 1px solid #50665a; border-radius: 5px; background: #111a15; color: var(--ink); }
+    .idea-form select { min-height: 42px; }
+    .idea-form textarea { min-height: 112px; resize: vertical; line-height: 1.5; }
+    .idea-form textarea::placeholder { color: #84968b; }
+    .idea-form-footer, .idea-list-heading, .idea-entry-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .idea-count, .idea-date { color: var(--muted); font: 11px Consolas, monospace; }
+    .idea-status { min-height: 18px; margin: 0; color: var(--green); font-size: 12px; }
+    .idea-notice { margin: 18px 0; padding: 12px 14px; border-left: 2px solid var(--amber); background: #2b2b20; color: #d8d1b8; font-size: 11px; line-height: 1.55; }
+    .idea-notice strong { margin-right: 5px; color: #f0bd69; }
+    .idea-list-heading { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); }
+    .idea-list-heading h3 { margin: 0; font-size: 13px; }
+    .idea-list { display: grid; gap: 0; }
+    .idea-entry { padding: 15px 0; border-bottom: 1px solid var(--line); }
+    .idea-entry:last-child { border-bottom: 0; }
+    .idea-entry-heading { justify-content: flex-start; margin-bottom: 7px; }
+    .idea-category { color: var(--green); font-size: 11px; font-weight: 700; }
+    .idea-entry p { margin: 0; color: #d0ddd4; font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+    .idea-delete { margin-left: auto; padding: 4px 7px; border: 1px solid #50665a; border-radius: 4px; background: transparent; color: #bdcec3; cursor: pointer; font-size: 10px; }
+    .idea-delete:hover { border-color: var(--red); color: var(--red); }
+    .idea-empty { margin: 14px 0 0; color: var(--muted); font-size: 12px; }
+    .tip-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+    .tip { display: grid; grid-template-columns: 32px 1fr; gap: 13px; padding: 17px 0; border-bottom: 1px solid var(--line); }
+    .tip:last-child { border-bottom: 0; }
+    .tip-number { color: var(--green); font: 12px Consolas, monospace; }
+    .tip strong { display: block; margin-bottom: 4px; color: #dce9e0; font-size: 13px; }
+    .tip p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    footer { margin-top: 22px; color: #9bab9f; font-size: 11px; text-align: center; }
+    .signature { display: block; margin-top: 8px; color: #71877a; font-size: 10px; }
+    @media (max-width: 560px) {
+      main { padding-top: 43px; }
+      .top-note { display: none; }
+      .checks { grid-template-columns: 1fr; }
+      .phrase-controls { grid-template-columns: 1fr; gap: 14px; }
+      .username-controls, .username-results, .email-controls, .email-results { grid-template-columns: 1fr; }
+      .privacy { display: block; }
+      .privacy strong { display: block; margin-bottom: 3px; }
+      .workspace { padding: 20px 17px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">K</span><span>Clé · sécurité en douceur</span></div>
+    <span class="top-note">TON ESPACE PRIVÉ</span>
+  </header>
+  <main>
+    <div class="eyebrow">Un petit pas pour ta sécurité</div>
+    <h1>Bienvenue dans ton espace sécurité.</h1>
+    <p class="intro">Crée une clé solide ou vérifie la tienne. On garde tout sur ton appareil.</p>
+    <nav class="tabs" role="tablist" aria-label="Outils de sécurité">
+      <button class="tab" id="tab-password" type="button" role="tab" aria-selected="true" aria-controls="panel-password">Mot de passe</button>
+      <button class="tab" id="tab-phrase" type="button" role="tab" aria-selected="false" aria-controls="panel-phrase" tabindex="-1">Phrase secrète</button>
+      <button class="tab" id="tab-username" type="button" role="tab" aria-selected="false" aria-controls="panel-username" tabindex="-1">Nom d'utilisateur</button>
+      <button class="tab" id="tab-email" type="button" role="tab" aria-selected="false" aria-controls="panel-email" tabindex="-1">Adresse e-mail</button>
+      <button class="tab" id="tab-ideas" type="button" role="tab" aria-selected="false" aria-controls="panel-ideas" tabindex="-1">Idées</button>
+      <button class="tab" id="tab-tips" type="button" role="tab" aria-selected="false" aria-controls="panel-tips" tabindex="-1">Conseils</button>
+    </nav>
+    <section class="workspace tab-panel" id="panel-password" role="tabpanel" aria-labelledby="tab-password" tabindex="0" aria-label="Vérificateur de mot de passe">
+      <label class="field-label" for="password">Mot de passe</label>
+      <div class="input-row">
+        <input id="password" type="password" autocomplete="new-password" placeholder="Saisis un mot de passe à tester" spellcheck="false" aria-describedby="privacy-note">
+        <button class="icon-button" id="toggle" type="button" aria-label="Afficher le mot de passe">VOIR</button>
+      </div>
+      <div class="options" aria-label="Options de génération">
+        <div class="options-heading"><label for="length">Longueur générée</label><output id="length-value" for="length">20 caractères</output></div>
+        <input id="length" type="range" min="8" max="40" value="20">
+        <div class="range-labels"><span>8</span><span>40 caractères</span></div>
+        <div class="option-list" aria-label="Types de caractères à inclure">
+          <label class="option"><input type="checkbox" data-pool="upper" checked> Majuscules</label>
+          <label class="option"><input type="checkbox" data-pool="lower" checked> Minuscules</label>
+          <label class="option"><input type="checkbox" data-pool="digits" checked> Chiffres</label>
+          <label class="option"><input type="checkbox" data-pool="symbols" checked> Symboles</label>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="action primary" id="generate" type="button">Générer une clé</button>
+        <button class="action" id="copy" type="button">Copier</button>
+        <button class="action" id="clear" type="button">Effacer</button>
+      </div>
+      <div class="result" aria-live="polite">
+        <span class="result-label">Comment se porte ta clé ?</span>
+        <span id="strength">À ton rythme</span>
+        <div class="meter" aria-label="Indicateur de robustesse">
+          <span class="segment"></span><span class="segment"></span><span class="segment"></span><span class="segment"></span><span class="segment"></span>
+        </div>
+      </div>
+      <div class="criteria">
+        <p class="criteria-title">Critères de robustesse</p>
+        <div class="checks">
+          <div class="check" data-check="length"><span class="check-bullet">✓</span><span>12 caractères ou plus</span></div>
+          <div class="check" data-check="lower"><span class="check-bullet">✓</span><span>Une lettre minuscule</span></div>
+          <div class="check" data-check="upper"><span class="check-bullet">✓</span><span>Une lettre majuscule</span></div>
+          <div class="check" data-check="number"><span class="check-bullet">✓</span><span>Un chiffre</span></div>
+          <div class="check" data-check="special"><span class="check-bullet">✓</span><span>Un caractère spécial</span></div>
+        </div>
+      </div>
+      <div class="privacy" id="privacy-note"><strong>Confidentialité</strong><span>La vérification se fait dans cette page. Ton mot de passe n’est ni transmis ni enregistré.</span></div>
+    </section>
+    <section class="workspace tab-panel" id="panel-phrase" role="tabpanel" aria-labelledby="tab-phrase" tabindex="0" hidden>
+      <h2>Créer une phrase secrète</h2>
+      <p class="tool-intro">Une suite de mots aléatoires, générée sur ton appareil. Choisis le nombre de mots et leur séparateur.</p>
+      <div class="phrase-controls">
+        <div>
+          <div class="options-heading"><label for="word-count">Nombre de mots</label><output id="word-count-value" for="word-count">8 mots</output></div>
+          <input id="word-count" type="range" min="5" max="10" value="8">
+          <div class="range-labels"><span>5</span><span>10 mots</span></div>
+        </div>
+        <div>
+          <label for="separator">Séparateur</label>
+          <select id="separator">
+            <option value="-">Tiret (-)</option>
+            <option value=" ">Espace</option>
+            <option value=".">Point (.)</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="action primary" id="generate-phrase" type="button">Créer une phrase</button>
+        <button class="action" id="copy-phrase" type="button">Copier</button>
+      </div>
+      <div class="input-row" style="margin-top: 19px">
+        <input class="phrase-output" id="phrase-output" type="text" readonly placeholder="Ta phrase apparaîtra ici" aria-label="Phrase secrète générée">
+      </div>
+      <p class="phrase-status" id="phrase-status" aria-live="polite"></p>
+      <div class="privacy"><strong>Confidentialité</strong><span>Les mots sont choisis aléatoirement dans une liste incluse dans cette page. Rien n’est envoyé ni enregistré.</span></div>
+    </section>
+    <section class="workspace tab-panel" id="panel-username" role="tabpanel" aria-labelledby="tab-username" tabindex="0" hidden>
+      <h2>Générateur de pseudos</h2>
+      <p class="tool-intro">Choisis un style et découvre plusieurs idées. Tout est généré sur ton appareil.</p>
+      <div class="username-controls">
+        <div>
+          <label for="username-style">Style du pseudo</label>
+          <select id="username-style">
+            <option value="adventure">Aventure</option>
+            <option value="nature">Nature</option>
+            <option value="tech">Tech</option>
+            <option value="minimal">Minimaliste</option>
+          </select>
+        </div>
+        <div>
+          <label for="username-seed">Mot-clé facultatif</label>
+          <input id="username-seed" type="text" maxlength="16" placeholder="Ex. Nova" autocomplete="off">
+        </div>
+      </div>
+      <label class="username-toggle"><input id="username-numbers" type="checkbox"> Ajouter quelques chiffres</label>
+      <div class="actions">
+        <button class="action primary" id="generate-usernames" type="button">Créer des suggestions</button>
+        <button class="action" id="copy-username" type="button" disabled>Copier le pseudo</button>
+      </div>
+      <div class="username-results" id="username-results" role="list" aria-label="Suggestions de pseudos"></div>
+      <div class="input-row" style="margin-top: 17px">
+        <input class="phrase-output" id="username-selected" type="text" readonly placeholder="Sélectionne un pseudo" aria-label="Pseudo sélectionné">
+      </div>
+      <p class="username-status" id="username-status" aria-live="polite"></p>
+      <div class="privacy"><strong>Petit rappel</strong><span>Évite d’inclure ton nom complet, ta date de naissance ou d’autres informations personnelles.</span></div>
+    </section>
+    <section class="workspace tab-panel" id="panel-email" role="tabpanel" aria-labelledby="tab-email" tabindex="0" hidden>
+      <h2>Générateur d’idées d’adresse e-mail</h2>
+      <p class="tool-intro">Choisis un mot-clé et un domaine pour obtenir plusieurs idées d’adresse.</p>
+      <div class="email-controls">
+        <div>
+          <label for="email-keyword">Mot-clé facultatif</label>
+          <input id="email-keyword" type="text" maxlength="20" placeholder="Ex. mavpaka" autocomplete="off">
+        </div>
+        <div>
+          <label for="email-domain">Domaine</label>
+          <select id="email-domain">
+            <option value="gmail.com">gmail.com</option>
+            <option value="outlook.com">outlook.com</option>
+            <option value="proton.me">proton.me</option>
+            <option value="example.com">example.com (démo)</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="action primary" id="generate-emails" type="button">Générer des idées</button>
+        <button class="action" id="copy-email" type="button" disabled>Copier l’adresse</button>
+      </div>
+      <div class="email-results" id="email-results" role="list" aria-label="Idées d’adresses e-mail"></div>
+      <div class="input-row" style="margin-top: 17px">
+        <input class="phrase-output" id="email-selected" type="text" readonly placeholder="Sélectionne une adresse" aria-label="Adresse e-mail sélectionnée">
+      </div>
+      <p class="email-status" id="email-status" aria-live="polite"></p>
+      <div class="privacy"><strong>À savoir</strong><span>Ces idées ne créent pas de boîte e-mail et leur disponibilité n’est pas vérifiée. Pour obtenir une adresse fonctionnelle, crée-la auprès du fournisseur choisi.</span></div>
+    </section>
+    <section class="workspace tab-panel" id="panel-tips" role="tabpanel" aria-labelledby="tab-tips" tabindex="0" hidden>
+      <h2>Quelques bons réflexes</h2>
+      <p class="tool-intro">De petites habitudes qui renforcent la sécurité de tes comptes.</p>
+      <ol class="tip-list">
+        <li class="tip"><span class="tip-number">01</span><div><strong>Un mot de passe différent par compte</strong><p>Si un service est compromis, les autres comptes restent mieux protégés.</p></div></li>
+        <li class="tip"><span class="tip-number">02</span><div><strong>Active la double authentification</strong><p>Une deuxième étape de vérification ajoute une protection en cas de mot de passe volé.</p></div></li>
+        <li class="tip"><span class="tip-number">03</span><div><strong>Utilise un gestionnaire de mots de passe</strong><p>Il peut créer et mémoriser des mots de passe uniques pour chaque service.</p></div></li>
+        <li class="tip"><span class="tip-number">04</span><div><strong>Méfie-toi des liens inattendus</strong><p>Vérifie le nom du site avant de saisir tes identifiants, même si le message semble urgent.</p></div></li>
+        <li class="tip"><span class="tip-number">05</span><div><strong>Garde tes appareils à jour</strong><p>Les mises à jour corrigent souvent des failles de sécurité importantes.</p></div></li>
+      </ol>
+    </section>
+    <section class="workspace tab-panel" id="panel-ideas" role="tabpanel" aria-labelledby="tab-ideas" tabindex="0" hidden>
+      <h2>Boîte à idées</h2>
+      <p class="tool-intro">Une suggestion pour améliorer le site ? Note-la ici.</p>
+      <div class="idea-notice"><strong>À savoir</strong>Les idées sont conservées uniquement dans ce navigateur. Pour les recevoir de plusieurs personnes ou appareils, il faudra connecter le site à un serveur.</div>
+      <form class="idea-form" id="idea-form">
+        <label for="idea-category">Catégorie
+          <select id="idea-category">
+            <option>Nouvel outil</option>
+            <option>Amélioration</option>
+            <option>Design</option>
+            <option>Autre</option>
+          </select>
+        </label>
+        <label for="idea-text">Ton idée
+          <textarea id="idea-text" maxlength="500" required placeholder="Décris ton idée en quelques phrases..."></textarea>
+        </label>
+        <div class="idea-form-footer">
+          <span class="idea-count" id="idea-count">0 / 500</span>
+          <button class="action primary" type="submit">Enregistrer l’idée</button>
+        </div>
+        <p class="idea-status" id="idea-status" aria-live="polite"></p>
+      </form>
+      <div class="idea-list-heading">
+        <h3>Idées enregistrées sur cet appareil</h3>
+        <button class="idea-delete" id="clear-ideas" type="button">Tout effacer</button>
+      </div>
+      <div class="idea-list" id="idea-list" aria-live="polite"></div>
+    </section>
+    <footer>
+      Évite de réutiliser un même mot de passe sur plusieurs services.
+      <span class="signature">by: MAV paka x MAV paki</span>
+    </footer>
+  </main>
+  <script>
+    const input = document.querySelector("#password");
+    const strength = document.querySelector("#strength");
+    const segments = [...document.querySelectorAll(".segment")];
+    const lengthInput = document.querySelector("#length");
+    const poolOptions = [...document.querySelectorAll("[data-pool]")];
+    const generateButton = document.querySelector("#generate");
+    const tabs = [...document.querySelectorAll('[role="tab"]')];
+    const characterPools = {
+      upper: "ABCDEFGHJKLMNPQRSTUVWXYZ",
+      lower: "abcdefghijkmnopqrstuvwxyz",
+      digits: "23456789",
+      symbols: "!@#$%&*?-_"
+    };
+    const checks = {
+      length: value => value.length >= 12,
+      lower: value => /[a-z]/.test(value),
+      upper: value => /[A-Z]/.test(value),
+      number: value => /[0-9]/.test(value),
+      special: value => /[^A-Za-z0-9]/.test(value)
+    };
+
+    function activateTab(tab, moveFocus = false) {
+      tabs.forEach(item => {
+        const selected = item === tab;
+        item.setAttribute("aria-selected", String(selected));
+        item.tabIndex = selected ? 0 : -1;
+        document.querySelector(`#${item.getAttribute("aria-controls")}`).hidden = !selected;
+      });
+      if (moveFocus) tab.focus();
+    }
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => activateTab(tab));
+      tab.addEventListener("keydown", event => {
+        const next = event.key === "ArrowRight" ? (index + 1) % tabs.length : event.key === "ArrowLeft" ? (index - 1 + tabs.length) % tabs.length : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : -1;
+        if (next >= 0) {
+          event.preventDefault();
+          activateTab(tabs[next], true);
+        }
+      });
+    });
+
+    function evaluate() {
+      const value = input.value;
+      const score = Object.entries(checks).reduce((total, [name, test]) => {
+        const passed = test(value);
+        document.querySelector(`[data-check="${name}"]`).classList.toggle("pass", passed);
+        return total + Number(passed);
+      }, 0);
+      const hasInput = value.length > 0;
+      const label = !hasInput ? "À ton rythme" : score <= 2 ? "À renforcer" : score <= 4 ? "En bonne voie" : "Très bien";
+      strength.textContent = label;
+      strength.style.color = !hasInput ? "#a4b6ac" : score <= 2 ? "#f18c83" : score <= 4 ? "#f0bd69" : "#62c99a";
+      segments.forEach((segment, index) => {
+        segment.classList.toggle("on", hasInput && index < score);
+        segment.classList.toggle("weak", score <= 2);
+        segment.classList.toggle("mid", score > 2 && score <= 4);
+      });
+    }
+
+    input.addEventListener("input", evaluate);
+    lengthInput.addEventListener("input", () => {
+      document.querySelector("#length-value").textContent = `${lengthInput.value} caractères`;
+    });
+    poolOptions.forEach(option => option.addEventListener("change", () => {
+      generateButton.disabled = !poolOptions.some(item => item.checked);
+    }));
+    document.querySelector("#toggle").addEventListener("click", event => {
+      const visible = input.type === "password";
+      input.type = visible ? "text" : "password";
+      event.currentTarget.textContent = visible ? "CACHER" : "VOIR";
+      event.currentTarget.setAttribute("aria-label", visible ? "Masquer le mot de passe" : "Afficher le mot de passe");
+      input.focus();
+    });
+    generateButton.addEventListener("click", () => {
+      const selectedPools = poolOptions.filter(option => option.checked).map(option => characterPools[option.dataset.pool]);
+      const alphabet = selectedPools.join("");
+      const size = Number(lengthInput.value);
+      const generated = selectedPools.map(pool => pool[crypto.getRandomValues(new Uint32Array(1))[0] % pool.length]);
+      while (generated.length < size) {
+        const index = crypto.getRandomValues(new Uint32Array(1))[0] % alphabet.length;
+        generated.push(alphabet[index]);
+      }
+      for (let index = generated.length - 1; index > 0; index--) {
+        const swapIndex = crypto.getRandomValues(new Uint32Array(1))[0] % (index + 1);
+        [generated[index], generated[swapIndex]] = [generated[swapIndex], generated[index]];
+      }
+      input.value = generated.join("");
+      input.type = "password";
+      document.querySelector("#toggle").textContent = "VOIR";
+      document.querySelector("#toggle").setAttribute("aria-label", "Afficher le mot de passe");
+      evaluate();
+    });
+    document.querySelector("#copy").addEventListener("click", async event => {
+      if (!input.value) {
+        strength.textContent = "Rien à copier";
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(input.value);
+        event.currentTarget.textContent = "Copié";
+        setTimeout(() => event.currentTarget.textContent = "Copier", 1400);
+      } catch {
+        strength.textContent = "Copie indisponible";
+      }
+    });
+    document.querySelector("#clear").addEventListener("click", () => {
+      input.value = "";
+      input.type = "password";
+      document.querySelector("#toggle").textContent = "VOIR";
+      document.querySelector("#toggle").setAttribute("aria-label", "Afficher le mot de passe");
+      evaluate();
+      input.focus();
+    });
+
+    const words = [
+      "abeille", "abricot", "aigle", "amande", "ancre", "ardoise", "aurore", "avion",
+      "bambou", "banane", "barque", "belette", "bleuet", "boussole", "brume", "cabane",
+      "cactus", "cahier", "canari", "carotte", "cascade", "cerise", "chemin", "chouette",
+      "citron", "cloche", "colline", "comete", "corail", "coton", "cristal", "dahlia",
+      "daim", "delta", "diamant", "dune", "eclair", "ecorce", "ecureuil", "epee",
+      "etoile", "faon", "farine", "felin", "feuille", "fjord", "flamme", "fontaine",
+      "foret", "fraise", "galet", "girafe", "glacier", "grenade", "guitare", "hibou",
+      "horizon", "igloo", "iris", "jardin", "jasmin", "jument", "kayak", "kiwi",
+      "lagon", "lampe", "lavande", "legende", "lierre", "limon", "luciole", "lueur",
+      "machine", "magie", "mangue", "marmotte", "medaille", "melon", "menthe", "miel",
+      "miroir", "montagne", "moteur", "moulin", "myrtille", "navire", "nuage", "numero",
+      "oasis", "octave", "olivier", "orange", "orchidee", "ourson", "pagode", "papier",
+      "parquet", "pastel", "pavot", "peche", "perle", "piment", "pinson", "pistache",
+      "prairie", "plume", "quartz", "quinoa", "rayon", "refuge", "renard", "riviere",
+      "robot", "ruban", "sablier", "safran", "sardine", "satellite", "savane", "saison",
+      "secret", "silence", "soleil", "souris", "tempo", "tigre", "tulipe", "valise"
+    ];
+    const wordCount = document.querySelector("#word-count");
+    wordCount.addEventListener("input", () => {
+      document.querySelector("#word-count-value").textContent = `${wordCount.value} mots`;
+    });
+    document.querySelector("#generate-phrase").addEventListener("click", () => {
+      const randomValues = crypto.getRandomValues(new Uint32Array(Number(wordCount.value)));
+      const phrase = Array.from(randomValues, value => words[value % words.length]).join(document.querySelector("#separator").value);
+      document.querySelector("#phrase-output").value = phrase;
+      document.querySelector("#phrase-status").textContent = "Phrase créée sur cet appareil.";
+    });
+    document.querySelector("#copy-phrase").addEventListener("click", async () => {
+      const output = document.querySelector("#phrase-output");
+      const status = document.querySelector("#phrase-status");
+      if (!output.value) {
+        status.textContent = "Crée d’abord une phrase.";
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(output.value);
+        status.textContent = "Phrase copiée.";
+      } catch {
+        status.textContent = "Copie indisponible dans ce navigateur.";
+      }
+    });
+
+    const usernameStyles = {
+      adventure: { first: ["Aube", "Brave", "Cobalt", "Dragon", "Eclair", "Faucon", "Lunaire", "Mystere", "Nova", "Orage", "Pixel", "Vaillant"], second: ["Nomade", "Vagabond", "Etoile", "Explorateur", "Voyageur", "Boussole", "Comete", "Sentinelle", "Rover", "Pionnier"] },
+      nature: { first: ["Amande", "Bambou", "Brume", "Cerisier", "Dahlia", "Fougere", "Lilas", "Mousse", "Saule", "Soleil", "Velours", "Zeste"], second: ["Riviere", "Sauvage", "Mistral", "Lichen", "Papillon", "Pollen", "Cascade", "Prairie", "Luciole", "Nuage"] },
+      tech: { first: ["Byte", "Circuit", "Cosmo", "Echo", "Flux", "Neon", "Pixel", "Signal", "Vector", "Voxel", "Quantum", "Static"], second: ["Nomade", "Orbit", "Pilot", "Nexus", "Wave", "Spark", "Shift", "Core", "Glitch", "Loop"] },
+      minimal: { first: ["Alto", "Calme", "Clair", "Doux", "Libre", "Loin", "Matin", "Plein", "Simple", "Sol", "Tendre", "Vif"], second: ["Bleu", "Lent", "Ligne", "Point", "Serein", "Clair", "Lisse", "Juste", "Neuf", "Rare"] }
+    };
+    const usernameResults = document.querySelector("#username-results");
+    const usernameSelected = document.querySelector("#username-selected");
+    const usernameStatus = document.querySelector("#username-status");
+    const copyUsername = document.querySelector("#copy-username");
+    const randomIndex = max => crypto.getRandomValues(new Uint32Array(1))[0] % max;
+
+    document.querySelector("#generate-usernames").addEventListener("click", () => {
+      const style = usernameStyles[document.querySelector("#username-style").value];
+      const seed = document.querySelector("#username-seed").value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, "").slice(0, 16);
+      const addNumbers = document.querySelector("#username-numbers").checked;
+      const suggestions = new Set();
+      while (suggestions.size < 6) {
+        const first = style.first[randomIndex(style.first.length)];
+        const second = style.second[randomIndex(style.second.length)];
+        const suffix = addNumbers ? String(10 + randomIndex(990)) : "";
+        suggestions.add(`${seed || first}${second}${suffix}`);
+      }
+      usernameResults.replaceChildren();
+      suggestions.forEach(pseudo => {
+        const choice = document.createElement("button");
+        choice.type = "button";
+        choice.className = "username-choice";
+        choice.textContent = pseudo;
+        choice.setAttribute("role", "listitem");
+        choice.setAttribute("aria-pressed", "false");
+        usernameResults.append(choice);
+      });
+      usernameSelected.value = "";
+      copyUsername.disabled = true;
+      usernameStatus.textContent = "Choisis une suggestion pour la sélectionner.";
+    });
+
+    usernameResults.addEventListener("click", event => {
+      const choice = event.target.closest(".username-choice");
+      if (!choice) return;
+      usernameResults.querySelectorAll(".username-choice").forEach(item => item.setAttribute("aria-pressed", String(item === choice)));
+      usernameSelected.value = choice.textContent;
+      copyUsername.disabled = false;
+      usernameStatus.textContent = "Pseudo sélectionné.";
+    });
+
+    copyUsername.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(usernameSelected.value);
+        usernameStatus.textContent = "Pseudo copié.";
+      } catch {
+        usernameStatus.textContent = "Copie indisponible dans ce navigateur.";
+      }
+    });
+
+    const emailResults = document.querySelector("#email-results");
+    const emailSelected = document.querySelector("#email-selected");
+    const emailStatus = document.querySelector("#email-status");
+    const copyEmail = document.querySelector("#copy-email");
+    const emailRoots = ["aurore", "cobalt", "lumen", "mistral", "nova", "pixel", "rivage", "solstice", "tempo", "zenith"];
+
+    document.querySelector("#generate-emails").addEventListener("click", () => {
+      const keyword = document.querySelector("#email-keyword").value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.+|\.+$/g, "").slice(0, 20).replace(/\.+$/g, "");
+      const domain = document.querySelector("#email-domain").value;
+      const suggestions = new Set();
+      while (suggestions.size < 6) {
+        const root = emailRoots[randomIndex(emailRoots.length)];
+        const suffix = 10 + randomIndex(990);
+        const localPart = keyword
+          ? [`${keyword}.${root}`, `${root}.${keyword}`, `${keyword}${suffix}`][randomIndex(3)]
+          : [`${root}${suffix}`, `${root}.${emailRoots[randomIndex(emailRoots.length)]}`, `${emailRoots[randomIndex(emailRoots.length)]}.${root}`][randomIndex(3)];
+        suggestions.add(`${localPart}@${domain}`);
+      }
+      emailResults.replaceChildren();
+      suggestions.forEach(address => {
+        const choice = document.createElement("button");
+        choice.type = "button";
+        choice.className = "email-choice";
+        choice.textContent = address;
+        choice.setAttribute("role", "listitem");
+        choice.setAttribute("aria-pressed", "false");
+        emailResults.append(choice);
+      });
+      emailSelected.value = "";
+      copyEmail.disabled = true;
+      emailStatus.textContent = "Choisis une idée pour la sélectionner.";
+    });
+
+    emailResults.addEventListener("click", event => {
+      const choice = event.target.closest(".email-choice");
+      if (!choice) return;
+      emailResults.querySelectorAll(".email-choice").forEach(item => item.setAttribute("aria-pressed", String(item === choice)));
+      emailSelected.value = choice.textContent;
+      copyEmail.disabled = false;
+      emailStatus.textContent = "Adresse sélectionnée.";
+    });
+
+    copyEmail.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(emailSelected.value);
+        emailStatus.textContent = "Adresse copiée.";
+      } catch {
+        emailStatus.textContent = "Copie indisponible dans ce navigateur.";
+      }
+    });
+
+    const ideaForm = document.querySelector("#idea-form");
+    const ideaText = document.querySelector("#idea-text");
+    const ideaCount = document.querySelector("#idea-count");
+    const ideaStatus = document.querySelector("#idea-status");
+    const ideaList = document.querySelector("#idea-list");
+    const ideaStorageKey = "cle-site-ideas-v1";
+
+    function readIdeas() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(ideaStorageKey) || "[]");
+        return Array.isArray(stored) ? stored : [];
+      } catch {
+        return [];
+      }
+    }
+
+    let ideas = readIdeas();
+
+    function renderIdeas() {
+      ideaList.replaceChildren();
+      if (ideas.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "idea-empty";
+        empty.textContent = "Aucune idée enregistrée pour le moment.";
+        ideaList.append(empty);
+        return;
+      }
+      [...ideas].reverse().forEach(idea => {
+        const entry = document.createElement("article");
+        entry.className = "idea-entry";
+        const heading = document.createElement("div");
+        heading.className = "idea-entry-heading";
+        const category = document.createElement("span");
+        category.className = "idea-category";
+        category.textContent = idea.category;
+        const date = document.createElement("time");
+        date.className = "idea-date";
+        date.textContent = new Date(idea.createdAt).toLocaleString("fr-FR");
+        const remove = document.createElement("button");
+        remove.className = "idea-delete";
+        remove.type = "button";
+        remove.dataset.deleteIdea = idea.id;
+        remove.textContent = "Supprimer";
+        heading.append(category, date, remove);
+        const text = document.createElement("p");
+        text.textContent = idea.text;
+        entry.append(heading, text);
+        ideaList.append(entry);
+      });
+    }
+
+    ideaText.addEventListener("input", () => {
+      ideaCount.textContent = `${ideaText.value.length} / 500`;
+    });
+
+    ideaForm.addEventListener("submit", event => {
+      event.preventDefault();
+      const text = ideaText.value.trim();
+      if (!text) return;
+      ideas.push({
+        id: crypto.randomUUID(),
+        category: document.querySelector("#idea-category").value,
+        text,
+        createdAt: new Date().toISOString()
+      });
+      try {
+        localStorage.setItem(ideaStorageKey, JSON.stringify(ideas));
+        renderIdeas();
+        ideaForm.reset();
+        ideaCount.textContent = "0 / 500";
+        ideaStatus.textContent = "Idée enregistrée dans ce navigateur.";
+      } catch {
+        ideas.pop();
+        ideaStatus.textContent = "Enregistrement indisponible dans ce navigateur.";
+      }
+    });
+
+    ideaList.addEventListener("click", event => {
+      const remove = event.target.closest("[data-delete-idea]");
+      if (!remove) return;
+      ideas = ideas.filter(idea => idea.id !== remove.dataset.deleteIdea);
+      localStorage.setItem(ideaStorageKey, JSON.stringify(ideas));
+      renderIdeas();
+      ideaStatus.textContent = "Idée supprimée.";
+    });
+
+    document.querySelector("#clear-ideas").addEventListener("click", () => {
+      ideas = [];
+      localStorage.removeItem(ideaStorageKey);
+      renderIdeas();
+      ideaStatus.textContent = "Toutes les idées de ce navigateur ont été effacées.";
+    });
+
+    renderIdeas();
+  </script>
+</body>
+</html>

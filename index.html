@@ -124,28 +124,10 @@
     .email-choice:hover, .email-choice[aria-pressed="true"] { border-color: var(--green); background: #263a2e; color: #9be3b9; }
     .email-results:empty { display: none; }
     .email-status { min-height: 18px; margin: 11px 0 0; color: var(--green); font-size: 12px; }
-    .idea-form { display: grid; gap: 12px; }
-    .idea-form label { color: #d4e2d9; font-size: 12px; font-weight: 700; }
-    .idea-form select, .idea-form textarea { width: 100%; margin-top: 7px; padding: 11px 12px; border: 1px solid #50665a; border-radius: 5px; background: #111a15; color: var(--ink); }
-    .idea-form select { min-height: 42px; }
-    .idea-form textarea { min-height: 112px; resize: vertical; line-height: 1.5; }
-    .idea-form textarea::placeholder { color: #84968b; }
-    .idea-form-footer, .idea-list-heading, .idea-entry-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .idea-count, .idea-date { color: var(--muted); font: 11px Consolas, monospace; }
-    .idea-status { min-height: 18px; margin: 0; color: var(--green); font-size: 12px; }
     .idea-notice { margin: 18px 0; padding: 12px 14px; border-left: 2px solid var(--amber); background: #2b2b20; color: #d8d1b8; font-size: 11px; line-height: 1.55; }
     .idea-notice strong { margin-right: 5px; color: #f0bd69; }
-    .idea-list-heading { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); }
-    .idea-list-heading h3 { margin: 0; font-size: 13px; }
-    .idea-list { display: grid; gap: 0; }
-    .idea-entry { padding: 15px 0; border-bottom: 1px solid var(--line); }
-    .idea-entry:last-child { border-bottom: 0; }
-    .idea-entry-heading { justify-content: flex-start; margin-bottom: 7px; }
-    .idea-category { color: var(--green); font-size: 11px; font-weight: 700; }
-    .idea-entry p { margin: 0; color: #d0ddd4; font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
-    .idea-delete { margin-left: auto; padding: 4px 7px; border: 1px solid #50665a; border-radius: 4px; background: transparent; color: #bdcec3; cursor: pointer; font-size: 10px; }
-    .idea-delete:hover { border-color: var(--red); color: var(--red); }
-    .idea-empty { margin: 14px 0 0; color: var(--muted); font-size: 12px; }
+    .idea-embed { display: block; width: 100%; height: 620px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+    .idea-link { display: inline-flex; align-items: center; text-decoration: none; }
     .tip-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
     .tip { display: grid; grid-template-columns: 32px 1fr; gap: 13px; padding: 17px 0; border-bottom: 1px solid var(--line); }
     .tip:last-child { border-bottom: 0; }
@@ -325,31 +307,12 @@
     </section>
     <section class="workspace tab-panel" id="panel-ideas" role="tabpanel" aria-labelledby="tab-ideas" tabindex="0" hidden>
       <h2>Boîte à idées</h2>
-      <p class="tool-intro">Une suggestion pour améliorer le site ? Note-la ici.</p>
-      <div class="idea-notice"><strong>À savoir</strong>Les idées sont conservées uniquement dans ce navigateur. Pour les recevoir de plusieurs personnes ou appareils, il faudra connecter le site à un serveur.</div>
-      <form class="idea-form" id="idea-form">
-        <label for="idea-category">Catégorie
-          <select id="idea-category">
-            <option>Nouvel outil</option>
-            <option>Amélioration</option>
-            <option>Design</option>
-            <option>Autre</option>
-          </select>
-        </label>
-        <label for="idea-text">Ton idée
-          <textarea id="idea-text" maxlength="500" required placeholder="Décris ton idée en quelques phrases..."></textarea>
-        </label>
-        <div class="idea-form-footer">
-          <span class="idea-count" id="idea-count">0 / 500</span>
-          <button class="action primary" type="submit">Enregistrer l’idée</button>
-        </div>
-        <p class="idea-status" id="idea-status" aria-live="polite"></p>
-      </form>
-      <div class="idea-list-heading">
-        <h3>Idées enregistrées sur cet appareil</h3>
-        <button class="idea-delete" id="clear-ideas" type="button">Tout effacer</button>
+      <p class="tool-intro">Une suggestion pour améliorer le site ? Envoie-la ici.</p>
+      <div class="idea-notice"><strong>Confidentialité</strong>Les réponses sont envoyées au formulaire Tally et consultables dans le compte qui le gère.</div>
+      <iframe class="idea-embed" src="https://tally.so/embed/Dq44OZ?alignLeft=1&amp;hideTitle=1&amp;transparentBackground=1&amp;dynamicHeight=1" title="Formulaire Tally : messagerie idée" loading="lazy"></iframe>
+      <div class="actions">
+        <a class="action primary idea-link" href="https://tally.so/r/Dq44OZ" target="_blank" rel="noopener noreferrer">Ouvrir le formulaire sur Tally</a>
       </div>
-      <div class="idea-list" id="idea-list" aria-live="polite"></div>
     </section>
     <footer>
       Évite de réutiliser un même mot de passe sur plusieurs services.
@@ -622,100 +585,6 @@
       }
     });
 
-    const ideaForm = document.querySelector("#idea-form");
-    const ideaText = document.querySelector("#idea-text");
-    const ideaCount = document.querySelector("#idea-count");
-    const ideaStatus = document.querySelector("#idea-status");
-    const ideaList = document.querySelector("#idea-list");
-    const ideaStorageKey = "cle-site-ideas-v1";
-
-    function readIdeas() {
-      try {
-        const stored = JSON.parse(localStorage.getItem(ideaStorageKey) || "[]");
-        return Array.isArray(stored) ? stored : [];
-      } catch {
-        return [];
-      }
-    }
-
-    let ideas = readIdeas();
-
-    function renderIdeas() {
-      ideaList.replaceChildren();
-      if (ideas.length === 0) {
-        const empty = document.createElement("p");
-        empty.className = "idea-empty";
-        empty.textContent = "Aucune idée enregistrée pour le moment.";
-        ideaList.append(empty);
-        return;
-      }
-      [...ideas].reverse().forEach(idea => {
-        const entry = document.createElement("article");
-        entry.className = "idea-entry";
-        const heading = document.createElement("div");
-        heading.className = "idea-entry-heading";
-        const category = document.createElement("span");
-        category.className = "idea-category";
-        category.textContent = idea.category;
-        const date = document.createElement("time");
-        date.className = "idea-date";
-        date.textContent = new Date(idea.createdAt).toLocaleString("fr-FR");
-        const remove = document.createElement("button");
-        remove.className = "idea-delete";
-        remove.type = "button";
-        remove.dataset.deleteIdea = idea.id;
-        remove.textContent = "Supprimer";
-        heading.append(category, date, remove);
-        const text = document.createElement("p");
-        text.textContent = idea.text;
-        entry.append(heading, text);
-        ideaList.append(entry);
-      });
-    }
-
-    ideaText.addEventListener("input", () => {
-      ideaCount.textContent = `${ideaText.value.length} / 500`;
-    });
-
-    ideaForm.addEventListener("submit", event => {
-      event.preventDefault();
-      const text = ideaText.value.trim();
-      if (!text) return;
-      ideas.push({
-        id: crypto.randomUUID(),
-        category: document.querySelector("#idea-category").value,
-        text,
-        createdAt: new Date().toISOString()
-      });
-      try {
-        localStorage.setItem(ideaStorageKey, JSON.stringify(ideas));
-        renderIdeas();
-        ideaForm.reset();
-        ideaCount.textContent = "0 / 500";
-        ideaStatus.textContent = "Idée enregistrée dans ce navigateur.";
-      } catch {
-        ideas.pop();
-        ideaStatus.textContent = "Enregistrement indisponible dans ce navigateur.";
-      }
-    });
-
-    ideaList.addEventListener("click", event => {
-      const remove = event.target.closest("[data-delete-idea]");
-      if (!remove) return;
-      ideas = ideas.filter(idea => idea.id !== remove.dataset.deleteIdea);
-      localStorage.setItem(ideaStorageKey, JSON.stringify(ideas));
-      renderIdeas();
-      ideaStatus.textContent = "Idée supprimée.";
-    });
-
-    document.querySelector("#clear-ideas").addEventListener("click", () => {
-      ideas = [];
-      localStorage.removeItem(ideaStorageKey);
-      renderIdeas();
-      ideaStatus.textContent = "Toutes les idées de ce navigateur ont été effacées.";
-    });
-
-    renderIdeas();
   </script>
 </body>
 </html>
